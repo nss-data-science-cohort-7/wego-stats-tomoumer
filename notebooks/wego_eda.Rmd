@@ -1,0 +1,57 @@
+---
+title: "R Notebook"
+output: html_notebook
+---
+
+```{r}
+library(tidyverse)
+```
+```{r}
+stops <- read_csv("../data/headway_data_clean.csv")
+```
+
+
+```{r}
+stops <- stops |> 
+  mutate(on_time = ADHERENCE > -6 & ADHERENCE < 1)
+
+stops |> 
+  summarize(otp = mean(on_time, na.rm = TRUE))
+```
+
+
+```{r}
+stops <- stops |> 
+  mutate(OPERATOR = factor(OPERATOR))
+```
+
+```{r}
+stops |> 
+  select(OPERATOR, on_time) |> 
+  group_by(OPERATOR) |> 
+  summarize(OTP = mean(on_time, na.rm = TRUE)) |> arrange(OTP)
+```
+```{r}
+# this is a good way to see what/how we can extract (by inspecting x)
+x <- prop.test(45, 100)
+
+x$conf.int
+```
+
+In order to be on top of the list above, we need to have lots of data (so that interval is small), as well as get a high on time percentage.
+
+```{r}
+stops |> 
+  drop_na(on_time) |> 
+  group_by(OPERATOR) |> 
+  summarize(x = sum(on_time), n = n()) |> 
+  rowwise() |> 
+  mutate(lb = prop.test(x, n)$conf.int[1],
+         ub = prop.test(x, n)$conf.int[2]) |> 
+  ungroup() |> 
+  arrange(desc(lb))
+
+# for worst; but we need to use more stuff
+# arrange(ub)
+```
+
